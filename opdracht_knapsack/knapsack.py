@@ -2,6 +2,28 @@ import random
 import csv
 import copy
 
+"""
+Knapsack Solver Implementation
+
+This Python script provides a basic implementation of a knapsack problem 
+solver along with various solving strategies. The knapsack problem 
+is a classic optimization problem where given a set of items, each with a 
+weight and a value, the goal is to determine the maximum value that can be 
+accommodated in a knapsack of limited capacity.
+
+Solvers:
+- Solver_Random: Randomly shuffles items and evaluates knapsack solutions for 
+a specified number of iterations.
+- Solver_Optimal_Recursive: Solves the knapsack problem optimally
+using a recursive approach.
+- Solver_Optimal_Iterative_Deepcopy: Solves the knapsack problem 
+optimally using an iterative approach with deep copies.
+- Solver_Optimal_Iterative: Solves the knapsack problem optimally 
+using an iterative approach without deep copying.
+- Solver_Random_Improved: An improved random solver generating 
+neighbor solutions by random removal and addition.
+
+"""
 
 class Item:
     def __init__(self, name, points, weight, volume, index):
