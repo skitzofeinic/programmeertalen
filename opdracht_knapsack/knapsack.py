@@ -10,6 +10,9 @@ class Item:
         self.weight = weight
         self.volume = volume
         self.index = index
+        
+    def clone(self):
+        return Item(self.name, self.points, self.weight, self.volume, self.index)
 
 class Items:
     def __init__(self):
@@ -24,8 +27,15 @@ class Items:
         item.index = self.global_index_counter
         self.global_index_counter += 1
         self.items.append(item)
+        
+    def clone(self):
+        cloned_items = Items()
+        cloned_items.global_index_counter = self.global_index_counter
+        cloned_items.resources = self.resources.clone()
 
-
+        for item in self.items:
+            cloned_items.add_item(item.clone())
+        return cloned_items
 
 class Resources:
     def __init__(self, points, weight, volume):
@@ -41,6 +51,10 @@ class Resources:
         self.weight -= item.weight
         self.volume -= item.volume
         return True
+    
+    def clone(self):
+        return Resources(self.points, self.weight, self.volume)
+
 
 class Knapsack:
     def __init__(self, points, weight, volume):
@@ -56,6 +70,12 @@ class Knapsack:
 
     def get_points(self):
         return self.resources.points
+    
+    def clone(self):
+        cloned_knapsack = Knapsack(self.resources.points, self.resources.weight, self.resources.volume)
+        cloned_knapsack.items = self.items.clone()
+        return cloned_knapsack
+
 
     def save(self, filename):
         with open(filename, 'w') as file:
@@ -116,7 +136,7 @@ class Solver_Optimal_Recursive:
         if depth == len(items.items):
             # Reached a leaf node, update the best knapsack if needed
             if knapsack.get_points() > self.best_knapsack.get_points():
-                self.best_knapsack = copy.deepcopy(knapsack)
+                self.best_knapsack = knapsack.clone()  # Use custom clone method instead of deepcopy
             return
 
         # Exclude the current item
@@ -124,9 +144,13 @@ class Solver_Optimal_Recursive:
 
         # Include the current item
         item = items.items[depth]
-        knapsack_with_item = copy.deepcopy(knapsack)
+        knapsack_with_item = knapsack.clone()  # Use custom clone method instead of deepcopy
         knapsack_with_item.add_item(item)
         self.recursive_search(knapsack_with_item, items, depth + 1)
+
+    def get_best_knapsack(self):
+        return self.best_knapsack
+
 
     def get_best_knapsack(self):
         return self.best_knapsack
