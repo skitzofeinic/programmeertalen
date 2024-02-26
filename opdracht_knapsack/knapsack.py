@@ -36,8 +36,9 @@ class Item:
         self.index = index
         
     def clone(self):
-        return Item(self.name, self.points, self.weight, self.volume, 
+        return Item(self.name, self.points, self.weight, self.volume,
                     self.index)
+
 
 
 class Items:
