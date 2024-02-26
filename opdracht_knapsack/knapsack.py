@@ -94,7 +94,6 @@ def load_knapsack(filename):
 
     with open(filename, 'r') as file:
         csv_reader = csv.reader(file)
-        header = next(csv_reader)
 
         for index, row in enumerate(csv_reader):
             name, points, weight, volume = row
