@@ -2,6 +2,7 @@ import random
 import csv
 import copy
 
+
 """
 Knapsack Solver Implementation
 
@@ -24,6 +25,7 @@ using an iterative approach without deep copying.
 neighbor solutions by random removal and addition.
 
 """
+
 
 class Item:
     def __init__(self, name, points, weight, volume, index):
