@@ -3,6 +3,7 @@ import csv
 import os
 import copy
 
+
 class Item:
     def __init__(self, name, points, weight, volume, index):
         self.name = name
@@ -12,7 +13,9 @@ class Item:
         self.index = index
         
     def clone(self):
-        return Item(self.name, self.points, self.weight, self.volume, self.index)
+        return Item(self.name, self.points, self.weight, self.volume,
+                                                         self.index)
+
 
 class Items:
     def __init__(self):
@@ -72,16 +75,18 @@ class Knapsack:
         return self.resources.points
     
     def clone(self):
-        cloned_knapsack = Knapsack(self.resources.points, self.resources.weight, self.resources.volume)
+        cloned_knapsack = Knapsack(self.resources.points,
+                                   self.resources.weight,
+                                   self.resources.volume)
         cloned_knapsack.items = self.items.clone()
         return cloned_knapsack
 
     def save(self, filename):
         with open(filename, 'w') as file:
-            file.write(f"Points:{self.resources.points}, Remaining weight:{self.resources.weight}, Remaining volume:{self.resources.volume}\n")
+            file.write(f"Points:{self.resources.points}\n")
 
             for item in self.items.items:
-                file.write(f"{item.name}, {item.points}, {item.weight}, {item.volume}, {item.index}\n")
+                file.write(f"{item.name}\n")
 
 
 def load_knapsack(filename):
@@ -95,7 +100,9 @@ def load_knapsack(filename):
         for index, row in enumerate(csv_reader):
             name, points, weight, volume = row
             if name.lower() == "knapsack":
-                knapsack.resources = Resources(int(points), int(weight), int(volume))
+                knapsack.resources = Resources(int(points),
+                                               int(weight),
+                                               int(volume))
                 print(knapsack)
             else:
                 item = Item(name, int(points), int(weight), int(volume), index)
@@ -103,7 +110,12 @@ def load_knapsack(filename):
 
     return knapsack, items_list
 
+
 class Solver_Random:
+    """
+    Randomly shuffles items and evaluates knapsack solutions for a specified
+    number of iterations.
+    """
     def __init__(self, iterations):
         self.iterations = iterations
         self.best_knapsack = None
@@ -115,7 +127,9 @@ class Solver_Random:
             shuffled_items = items.items.copy()
             random.shuffle(shuffled_items)
 
-            current_knapsack = Knapsack(knapsack.resources.points, knapsack.resources.weight, knapsack.resources.volume)
+            current_knapsack = Knapsack(knapsack.resources.points,
+                                        knapsack.resources.weight,
+                                        knapsack.resources.volume)
 
             for item in shuffled_items:
                 current_knapsack.add_item(item)
@@ -125,8 +139,12 @@ class Solver_Random:
 
     def get_best_knapsack(self):
         return self.best_knapsack
-            
+
+       
 class Solver_Optimal_Recursive:
+    """
+    Solves the knapsack problem optimally using a recursive approach.
+    """
     def solve(self, knapsack, items):
         self.best_knapsack = knapsack
         self.recursive_search(knapsack, items, 0)
@@ -147,7 +165,12 @@ class Solver_Optimal_Recursive:
     def get_best_knapsack(self):
         return self.best_knapsack
 
+
 class Solver_Optimal_Iterative_Deepcopy:
+    """
+    Solves the knapsack problem optimally using an iterative approach with
+    deep copies.
+    """
     def solve(self, knapsack, items):
         self.best_knapsack = knapsack
         stack = [(copy.deepcopy(knapsack), 0)]
@@ -170,24 +193,26 @@ class Solver_Optimal_Iterative_Deepcopy:
     def get_best_knapsack(self):
         return self.best_knapsack
 
+
 class Solver_Optimal_Iterative:
+    """
+    Solves the knapsack problem optimally using an iterative approach without
+    deep copying.
+    """
     def solve(self, knapsack, items):
         self.best_knapsack = knapsack
-        stack = [(0, knapsack, 0)]  # (depth, current_knapsack, current_item_index)
+        stack = [(0, knapsack, 0)]
 
         while stack:
             depth, current_knapsack, current_item_index = stack.pop()
 
             if depth == len(items.items):
-                # Reached a leaf node, update the best knapsack if needed
                 if current_knapsack.get_points() > self.best_knapsack.get_points():
                     self.best_knapsack = current_knapsack
                 continue
 
-            # Exclude the current item
             stack.append((depth + 1, current_knapsack, current_item_index))
 
-            # Include the current item
             item = items.items[current_item_index]
             if current_knapsack.resources.calc_items(item):
                 knapsack_with_item = Knapsack(current_knapsack.resources.points,
@@ -196,14 +221,20 @@ class Solver_Optimal_Iterative:
                 knapsack_with_item.items = current_knapsack.items.clone()
                 knapsack_with_item.add_item(item)
 
-                stack.append((depth + 1, knapsack_with_item, current_item_index + 1))
+                stack.append((depth + 1, knapsack_with_item, 
+                                         current_item_index + 1))
 
         return self.best_knapsack
     
     def get_best_knapsack(self):
         return self.best_knapsack
 
+
 class Solver_Random_Improved:
+    """
+    An improved random solver generating neighbor solutions by random removal 
+    and addition.
+    """
     def __init__(self, iterations):
         self.iterations = iterations
         self.best_knapsack = None
@@ -212,82 +243,59 @@ class Solver_Random_Improved:
         self.best_knapsack = knapsack
 
         for _ in range(self.iterations):
-            current_knapsack = self.hill_climbing(knapsack, items)
+            neighbor_knapsack = self.generate_neighbor_solution(knapsack, items)
+            
+            if neighbor_knapsack.get_points() > self.best_knapsack.get_points():
+                self.best_knapsack = neighbor_knapsack
 
-            if current_knapsack.get_points() > self.best_knapsack.get_points():
-                self.best_knapsack = current_knapsack
+    def generate_neighbor_solution(self, knapsack, items):
+        neighbor_knapsack = Knapsack(knapsack.resources.points, 
+                                     knapsack.resources.weight,
+                                     knapsack.resources.volume)
+        neighbor_knapsack.items.items = knapsack.items.items.copy()
 
-    def hill_climbing(knapsack, items, max_iterations):
-        current_solution = knapsack.clone()
-        current_value = objective_function(current_solution)
+        if neighbor_knapsack.items.items:
+            item_to_remove = random.choice(neighbor_knapsack.items.items)
+            neighbor_knapsack.remove_item(item_to_remove)
 
-        for iteration in range(max_iterations):
-            shuffled_items = items.items.copy()
-            random.shuffle(shuffled_items)
+        item_to_add = random.choice(items.items)
+        neighbor_knapsack.add_item(item_to_add)
 
-            neighbor_solution = Knapsack(knapsack.resources.points, knapsack.resources.weight, knapsack.resources.volume)
-
-            for item in shuffled_items:
-                neighbor_solution.add_item(item)
-
-            neighbor_value = objective_function(neighbor_solution.get_items())  # Calculate total points
-
-            if neighbor_value > current_value:
-                current_solution = neighbor_solution
-                current_value = neighbor_value
-
-        return current_solution
-    
-    def objective_function(items):
-        return sum(item.points for item in items.items)
+        return neighbor_knapsack
 
     def get_best_knapsack(self):
         return self.best_knapsack
+
 
 def main():
     solver_random = Solver_Random(1000)
     solver_optimal_recursive = Solver_Optimal_Recursive()
     solver_optimal_iterative_deepcopy = Solver_Optimal_Iterative_Deepcopy()
-    # solver_optimal_iterative = Solver_Optimal_Iterative()
+    solver_optimal_iterative = Solver_Optimal_Iterative()
     solver_random_improved = Solver_Random_Improved(5000)
 
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    knapsack_file = os.path.join(script_dir, 'knapsack_small.csv')
-    solve(solver_random, knapsack_file, knapsack_file.replace('.csv', '_solution_random.csv'))
-    solve(solver_optimal_recursive, knapsack_file, knapsack_file.replace('.csv', '_solution_recursive.csv'))
-    solve(solver_optimal_iterative_deepcopy, knapsack_file, knapsack_file.replace('.csv', '_solver_optimal_iterative_deepcopy.csv'))
-    solve(solver_random_improved, knapsack_file, knapsack_file.replace('.csv', '_solver_random_improved.csv'))
-    # solve(solver_optimal_iterative, knapsack_file, knapsack_file.replace('.csv', '_solver_optimal_iterative.csv'))
-    # knapsack_file = "knapsack_small"
+    knapsack_file = "knapsack_small"
     print("=== solving:", knapsack_file)
-    # solve(solver_random, knapsack_file, knapsack_file + "_solution_random.csv")
-    # solve(solver_optimal_recursive, knapsack_file + ".csv", knapsack_file + "_solution_optimal_recursive.csv")
-    # solve(solver_optimal_iterative_deepcopy, knapsack_file + ".csv",
-    #       knapsack_file + "_solution_optimal_iterative_deepcopy.csv")
-    # solve(solver_optimal_iterative, knapsack_file + ".csv", knapsack_file + "_solution_optimal_iterative.csv")
-    # solve(solver_random_improved, knapsack_file + ".csv", knapsack_file + "_solution_random_improved.csv")
-    
+    solve(solver_random, knapsack_file + ".csv", knapsack_file + "_solution_random.csv")
+    solve(solver_optimal_recursive, knapsack_file + ".csv", knapsack_file + "_solution_optimal_recursive.csv")
+    solve(solver_optimal_iterative_deepcopy, knapsack_file + ".csv",
+          knapsack_file + "_solution_optimal_iterative_deepcopy.csv")
+    solve(solver_optimal_iterative, knapsack_file + ".csv", knapsack_file + "_solution_optimal_iterative.csv")
+    solve(solver_random_improved, knapsack_file + ".csv", knapsack_file + "_solution_random_improved.csv")
 
-    knapsack_file = os.path.join(script_dir, 'knapsack_medium.csv')
-    solve(solver_random, knapsack_file, knapsack_file.replace('.csv', '_solution_random.csv'))
-    solve(solver_optimal_recursive, knapsack_file, knapsack_file.replace('.csv', '_solution_recursive.csv'))
-    solve(solver_optimal_iterative_deepcopy, knapsack_file, knapsack_file.replace('.csv', '_solver_optimal_iterative_deepcopy.csv'))
-    solve(solver_random_improved, knapsack_file, knapsack_file.replace('.csv', '_solver_random_improved.csv'))
-    # solve(solver_optimal_iterative, knapsack_file, knapsack_file.replace('.csv', '_solver_optimal_iterative.csv'))
+    knapsack_file = "knapsack_medium"
     print("=== solving:", knapsack_file)
-    # solve(solver_random, knapsack_file + ".csv", knapsack_file + "_solution_random.csv")
-    # solve(solver_optimal_recursive, knapsack_file + ".csv", knapsack_file + "_solution_optimal_recursive.csv")
-    # solve(solver_optimal_iterative_deepcopy, knapsack_file + ".csv",
-    #       knapsack_file + "_solution_optimal_iterative_deepcopy.csv")
-    # solve(solver_optimal_iterative, knapsack_file + ".csv", knapsack_file + "_solution_optimal_iterative.csv")
-    # solve(solver_random_improved, knapsack_file + ".csv", knapsack_file + "_solution_random_improved.csv")
+    solve(solver_random, knapsack_file + ".csv", knapsack_file + "_solution_random.csv")
+    solve(solver_optimal_recursive, knapsack_file + ".csv", knapsack_file + "_solution_optimal_recursive.csv")
+    solve(solver_optimal_iterative_deepcopy, knapsack_file + ".csv",
+          knapsack_file + "_solution_optimal_iterative_deepcopy.csv")
+    solve(solver_optimal_iterative, knapsack_file + ".csv", knapsack_file + "_solution_optimal_iterative.csv")
+    solve(solver_random_improved, knapsack_file + ".csv", knapsack_file + "_solution_random_improved.csv")
 
-    knapsack_file = os.path.join(script_dir, 'knapsack_large.csv')
-    solve(solver_random, knapsack_file, knapsack_file.replace('.csv', '_solution_random.csv'))
-    solve(solver_random_improved, knapsack_file, knapsack_file.replace('.csv', '_solver_random_improved.csv'))
+    knapsack_file = "knapsack_large"
     print("=== solving:", knapsack_file)
-    # solve(solver_random, knapsack_file + ".csv", knapsack_file + "_solution_random.csv")
-    # solve(solver_random_improved, knapsack_file + ".csv", knapsack_file + "_solution_random_improved.csv")
+    solve(solver_random, knapsack_file + ".csv", knapsack_file + "_solution_random.csv")
+    solve(solver_random_improved, knapsack_file + ".csv", knapsack_file + "_solution_random_improved.csv")
 
 
 def solve(solver, knapsack_file, solution_file):
