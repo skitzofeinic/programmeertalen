@@ -131,9 +131,13 @@ class Solver_Optimal_Recursive:
     def get_best_knapsack(self):
         return self.best_knapsack
 
-
 class Solver_Optimal_Iterative_Deepcopy:
-    pass
+    def solve(self, knapsack, items):
+        self.best_knapsack = knapsack
+        self.recursive_search(knapsack, items, 0)
+
+    def get_best_knapsack(self):
+        return self.best_knapsack
 
 class Solver_Optimal_Iterative:
     pass
@@ -142,7 +146,7 @@ class Solver_Random_Improved:
     pass
         
 def main():
-    # solver_random = Solver_Random(1000)
+    solver_random = Solver_Random(1000)
     solver_optimal_recursive = Solver_Optimal_Recursive()
     # solver_optimal_iterative_deepcopy = Solver_Optimal_Iterative_Deepcopy()
     # solver_optimal_iterative = Solver_Optimal_Iterative()
@@ -150,8 +154,8 @@ def main():
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     knapsack_file = os.path.join(script_dir, 'knapsack_small.csv')
-    # solve(solver_random, knapsack_file, knapsack_file.replace('.csv', '_solution_random.csv'))
-    solve(solver_optimal_recursive, knapsack_file, knapsack_file.replace('.csv', '_solution_random.csv'))
+    solve(solver_random, knapsack_file, knapsack_file.replace('.csv', '_solution_random.csv'))
+    solve(solver_optimal_recursive, knapsack_file, knapsack_file.replace('.csv', '_solution_recursive.csv'))
     # knapsack_file = "knapsack_small"
     print("=== solving:", knapsack_file)
     # solve(solver_random, knapsack_file, knapsack_file + "_solution_random.csv")
@@ -163,8 +167,8 @@ def main():
     
 
     knapsack_file = os.path.join(script_dir, 'knapsack_medium.csv')
-    # solve(solver_random, knapsack_file, knapsack_file.replace('.csv', '_solution_random.csv'))
-    solve(solver_optimal_recursive, knapsack_file, knapsack_file.replace('.csv', '_solution_random.csv'))
+    solve(solver_random, knapsack_file, knapsack_file.replace('.csv', '_solution_random.csv'))
+    solve(solver_optimal_recursive, knapsack_file, knapsack_file.replace('.csv', '_solution_recursive.csv'))
     print("=== solving:", knapsack_file)
     # solve(solver_random, knapsack_file + ".csv", knapsack_file + "_solution_random.csv")
     # solve(solver_optimal_recursive, knapsack_file + ".csv", knapsack_file + "_solution_optimal_recursive.csv")
@@ -174,8 +178,7 @@ def main():
     # solve(solver_random_improved, knapsack_file + ".csv", knapsack_file + "_solution_random_improved.csv")
 
     knapsack_file = os.path.join(script_dir, 'knapsack_large.csv')
-    solve(solver_optimal_recursive, knapsack_file, knapsack_file.replace('.csv', '_solution_random.csv'))
-    # solve(solver_random, knapsack_file, knapsack_file.replace('.csv', '_solution_random.csv'))
+    solve(solver_random, knapsack_file, knapsack_file.replace('.csv', '_solution_random.csv'))
     print("=== solving:", knapsack_file)
     # solve(solver_random, knapsack_file + ".csv", knapsack_file + "_solution_random.csv")
     # solve(solver_random_improved, knapsack_file + ".csv", knapsack_file + "_solution_random_improved.csv")
