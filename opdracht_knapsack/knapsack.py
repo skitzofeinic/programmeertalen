@@ -1,6 +1,5 @@
 import random
 import csv
-import os
 import copy
 
 
@@ -13,8 +12,8 @@ class Item:
         self.index = index
         
     def clone(self):
-        return Item(self.name, self.points, self.weight, self.volume,
-                                                         self.index)
+        return Item(self.name, self.points, self.weight, self.volume, 
+                    self.index)
 
 
 class Items:
@@ -30,7 +29,7 @@ class Items:
         item.index = self.global_index_counter
         self.global_index_counter += 1
         self.items.append(item)
-        
+
     def clone(self):
         cloned_items = Items()
         cloned_items.global_index_counter = self.global_index_counter
@@ -54,7 +53,7 @@ class Resources:
         self.weight -= item.weight
         self.volume -= item.volume
         return True
-    
+
     def clone(self):
         return Resources(self.points, self.weight, self.volume)
 
@@ -100,8 +99,7 @@ def load_knapsack(filename):
         for index, row in enumerate(csv_reader):
             name, points, weight, volume = row
             if name.lower() == "knapsack":
-                knapsack.resources = Resources(int(points),
-                                               int(weight),
+                knapsack.resources = Resources(int(points), int(weight),
                                                int(volume))
                 print(knapsack)
             else:
