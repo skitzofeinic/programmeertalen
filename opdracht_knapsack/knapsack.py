@@ -76,7 +76,6 @@ class Knapsack:
         cloned_knapsack.items = self.items.clone()
         return cloned_knapsack
 
-
     def save(self, filename):
         with open(filename, 'w') as file:
             file.write(f"Points:{self.resources.points}, Remaining weight:{self.resources.weight}, Remaining volume:{self.resources.volume}\n")
@@ -134,23 +133,16 @@ class Solver_Optimal_Recursive:
 
     def recursive_search(self, knapsack, items, depth):
         if depth == len(items.items):
-            # Reached a leaf node, update the best knapsack if needed
             if knapsack.get_points() > self.best_knapsack.get_points():
-                self.best_knapsack = knapsack.clone()  # Use custom clone method instead of deepcopy
+                self.best_knapsack = knapsack.clone()
             return
 
-        # Exclude the current item
         self.recursive_search(knapsack, items, depth + 1)
 
-        # Include the current item
         item = items.items[depth]
-        knapsack_with_item = knapsack.clone()  # Use custom clone method instead of deepcopy
+        knapsack_with_item = knapsack.clone()
         knapsack_with_item.add_item(item)
         self.recursive_search(knapsack_with_item, items, depth + 1)
-
-    def get_best_knapsack(self):
-        return self.best_knapsack
-
 
     def get_best_knapsack(self):
         return self.best_knapsack
@@ -158,13 +150,58 @@ class Solver_Optimal_Recursive:
 class Solver_Optimal_Iterative_Deepcopy:
     def solve(self, knapsack, items):
         self.best_knapsack = knapsack
-        self.recursive_search(knapsack, items, 0)
+        stack = [(copy.deepcopy(knapsack), 0)]
+
+        while stack:
+            current_knapsack, depth = stack.pop()
+
+            if depth == len(items.items):
+                if current_knapsack.get_points() > self.best_knapsack.get_points():
+                    self.best_knapsack = copy.deepcopy(current_knapsack)
+                continue
+
+            stack.append((copy.deepcopy(current_knapsack), depth + 1))
+
+            item = items.items[depth]
+            knapsack_with_item = copy.deepcopy(current_knapsack)
+            knapsack_with_item.add_item(item)
+            stack.append((knapsack_with_item, depth + 1))
 
     def get_best_knapsack(self):
         return self.best_knapsack
 
 class Solver_Optimal_Iterative:
-    pass
+    def solve(self, knapsack, items):
+        self.best_knapsack = knapsack
+        stack = [(0, knapsack, 0)]  # (depth, current_knapsack, current_item_index)
+
+        while stack:
+            depth, current_knapsack, current_item_index = stack.pop()
+
+            if depth == len(items.items):
+                # Reached a leaf node, update the best knapsack if needed
+                if current_knapsack.get_points() > self.best_knapsack.get_points():
+                    self.best_knapsack = current_knapsack
+                continue
+
+            # Exclude the current item
+            stack.append((depth + 1, current_knapsack, current_item_index))
+
+            # Include the current item
+            item = items.items[current_item_index]
+            if current_knapsack.resources.calc_items(item):
+                knapsack_with_item = Knapsack(current_knapsack.resources.points,
+                                             current_knapsack.resources.weight,
+                                             current_knapsack.resources.volume)
+                knapsack_with_item.items = current_knapsack.items.clone()
+                knapsack_with_item.add_item(item)
+
+                stack.append((depth + 1, knapsack_with_item, current_item_index + 1))
+
+        return self.best_knapsack
+    
+    def get_best_knapsack(self):
+        return self.best_knapsack
 
 class Solver_Random_Improved:
     pass
@@ -172,14 +209,16 @@ class Solver_Random_Improved:
 def main():
     solver_random = Solver_Random(1000)
     solver_optimal_recursive = Solver_Optimal_Recursive()
-    # solver_optimal_iterative_deepcopy = Solver_Optimal_Iterative_Deepcopy()
-    # solver_optimal_iterative = Solver_Optimal_Iterative()
+    solver_optimal_iterative_deepcopy = Solver_Optimal_Iterative_Deepcopy()
+    solver_optimal_iterative = Solver_Optimal_Iterative()
     # solver_random_improved = Solver_Random_Improved(5000)
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     knapsack_file = os.path.join(script_dir, 'knapsack_small.csv')
     solve(solver_random, knapsack_file, knapsack_file.replace('.csv', '_solution_random.csv'))
     solve(solver_optimal_recursive, knapsack_file, knapsack_file.replace('.csv', '_solution_recursive.csv'))
+    solve(solver_optimal_iterative_deepcopy, knapsack_file, knapsack_file.replace('.csv', '_solver_optimal_iterative_deepcopy.csv'))
+    solve(solver_optimal_iterative, knapsack_file, knapsack_file.replace('.csv', '_solver_optimal_iterative.csv'))
     # knapsack_file = "knapsack_small"
     print("=== solving:", knapsack_file)
     # solve(solver_random, knapsack_file, knapsack_file + "_solution_random.csv")
@@ -193,6 +232,8 @@ def main():
     knapsack_file = os.path.join(script_dir, 'knapsack_medium.csv')
     solve(solver_random, knapsack_file, knapsack_file.replace('.csv', '_solution_random.csv'))
     solve(solver_optimal_recursive, knapsack_file, knapsack_file.replace('.csv', '_solution_recursive.csv'))
+    solve(solver_optimal_iterative_deepcopy, knapsack_file, knapsack_file.replace('.csv', '_solver_optimal_iterative_deepcopy.csv'))
+    solve(solver_optimal_iterative, knapsack_file, knapsack_file.replace('.csv', '_solver_optimal_iterative.csv'))
     print("=== solving:", knapsack_file)
     # solve(solver_random, knapsack_file + ".csv", knapsack_file + "_solution_random.csv")
     # solve(solver_optimal_recursive, knapsack_file + ".csv", knapsack_file + "_solution_optimal_recursive.csv")
