@@ -1,3 +1,6 @@
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Use or" #-}
+{-# HLINT ignore "Use map" #-}
 module Puzzels where
 
 -- 1. length'
