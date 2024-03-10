@@ -6,7 +6,7 @@ length' = foldr (\_ acc -> acc + 1) 0
 
 -- 2. or'
 or' :: [Bool] -> Bool
-or' = or
+or' = foldr (||) False
 
 -- 3. elem'
 elem' :: Eq a => a -> [a] -> Bool
@@ -14,11 +14,11 @@ elem' x = foldr (\y acc -> y == x || acc) False
 
 -- 4. map'
 map' :: (a -> b) -> [a] -> [b]
-map' = map
+map' f = foldr (\x acc -> f x : acc) []
 
 -- 5. plusplus
 plusplus :: [a] -> [a] -> [a]
-plusplus xs ys = foldr (:) ys xs
+plusplus = foldr (:) 
 
 -- 6. reverseR
 reverseR :: [a] -> [a]
