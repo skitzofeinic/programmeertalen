@@ -102,16 +102,15 @@ solveSudoku sud = do
         tryConstraints [] = (s, [])
         tryConstraints ((r, c, vs):cs') =
             case vs of
-                [] -> (s, [])
+                [] -> tryConstraints cs'  -- Backtrack to previous constraint
                 _  -> tryValues vs
           where
             tryValues [] = (s, [])
             tryValues (v:vs') =
                 case filter (consistent . fst) [(extend s (r, c, v), constraints (extend s (r, c, v))) | v <- vs] of
-                    []             -> tryValues vs'
+                    [] -> tryValues vs'  -- Try next value
                     ((s', cs''):_) -> let (result, steps) = solve (s', cs'' ++ filter (\(r', c', _) -> (r', c') /= (r, c)) cs')
-                                    in (result, ("Trying value " ++ show v ++ " at position " ++ show (r, c)) : steps)
-
+                                      in (result, ("Trying value " ++ show v ++ " at position " ++ show (r, c)) : steps)
 main :: IO ()
 main = do
     args <- getArgs
