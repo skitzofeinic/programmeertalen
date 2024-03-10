@@ -81,7 +81,7 @@ consistent sud =
                       blockCols' = blockCols c
                   in nub [sud (r', c') | r' <- blockRows', c' <- blockCols', sud (r', c') /= 0] ==
                      [sud (r', c') | r' <- blockRows', c' <- blockCols', sud (r', c') /= 0])
-      [(r, c) | r <- centerOfBlocks, c <- centerOfBlocks]
+    [(r, c) | r <- centerOfBlocks, c <- centerOfBlocks]
   where
     blockRows x = let start = 3 * ((x - 1) `div` 3) + 1 in [start..start+2]
     blockCols = blockRows
@@ -108,9 +108,12 @@ solveSudoku sud = do
             tryValues [] = (s, [])
             tryValues (v:vs') =
                 case filter (consistent . fst) [(extend s (r, c, v), constraints (extend s (r, c, v))) | v <- vs] of
-                    [] -> tryValues vs'  -- Try next value
-                    ((s', cs''):_) -> let (result, steps) = solve (s', cs'' ++ filter (\(r', c', _) -> (r', c') /= (r, c)) cs')
-                                      in (result, ("Trying value " ++ show v ++ " at position " ++ show (r, c)) : steps)
+                    [] -> tryConstraints cs'  -- Backtrack to previous constraint
+                    ((s', cs''):_) -> case solve (s', cs'' ++ filter (\(r', c', _) -> (r', c') /= (r, c)) cs') of
+                                          (result, steps) -> if consistent result
+                                                            then (result, ("Trying value " ++ show v ++ " at position " ++ show (r, c)) : steps)
+                                                            else tryValues vs'  -- Try next value
+
 main :: IO ()
 main = do
     args <- getArgs
