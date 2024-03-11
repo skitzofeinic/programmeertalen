@@ -4,7 +4,7 @@ import Data.List
 type Row = Int
 type Column = Int
 type Value = Int
-type Grid = [[Value]] -- Only used to read/write from/to a file.
+type Grid = [[Value]]
 type Sudoku = (Row, Column) -> Value
 type Constraint = (Row, Column, [Value])
 type Node = (Sudoku, [Constraint])
@@ -30,10 +30,13 @@ grid2sud gr (r, c) = gr !! (r - 1) !! (c - 1)
 extend :: Sudoku -> (Row, Column, Value) -> Sudoku
 extend sud (r, c, v) (i, j) = if (r, c) == (i, j) then v else sud (i, j)
 
-readSudoku :: String -> IO Sudoku
-readSudoku filename = grid2sud . splitStringIntoGrid <$> readFile filename
-    where splitStringIntoGrid = map (map readint . words) . lines
-          readint x = read x :: Int
+readSudoku :: String -> IO (Maybe Sudoku)
+readSudoku filename = do
+  content <- readFile filename
+  return $ grid2sud . splitStringIntoGrid <$> Just content
+  where
+    splitStringIntoGrid = map (map readInt . words) . lines
+    readInt x = read x :: Int
 
 printSudoku :: Sudoku -> IO ()
 printSudoku = putStr . unlines . map (unwords . map show) . sud2grid
@@ -89,42 +92,31 @@ consistent sud =
 constraints :: Sudoku -> [Constraint]
 constraints sud = [(r, c, freeAtPos sud (r, c)) | (r, c) <- openPositions sud]
 
-solveSudoku :: Sudoku -> IO Sudoku
-solveSudoku sud = do
-    let (result, steps) = solve (sud, constraints sud)
-    mapM_ (\(step, s) -> putStrLn $ "Step " ++ show step ++ ": " ++ s) (zip [1..] steps)
-    return result
-  where
-    solve :: Node -> (Sudoku, [String])
-    solve (s, []) = (s, [])
-    solve (s, cs) = tryConstraints (sortBy (\(_, _, vs) (_, _, vs') -> compare (length vs) (length vs')) cs)
-      where
-        tryConstraints [] = (s, [])
-        tryConstraints ((r, c, vs):cs') =
-            case vs of
-                [] -> tryConstraints cs'  -- Backtrack to previous constraint
-                _  -> tryValues vs
-          where
-            tryValues [] = (s, [])
-            tryValues (v:vs') =
-                case filter (consistent . fst) [(extend s (r, c, v), constraints (extend s (r, c, v))) | v <- vs] of
-                    [] -> tryConstraints cs'  -- Backtrack to previous constraint
-                    ((s', cs''):_) -> case solve (s', cs'' ++ filter (\(r', c', _) -> (r', c') /= (r, c)) cs') of
-                                          (result, steps) -> if consistent result
-                                                            then (result, ("Trying value " ++ show v ++ " at position " ++ show (r, c)) : steps)
-                                                            else tryValues vs'  -- Try next value
+solveSudoku :: Sudoku -> Sudoku
+solveSudoku sud
+    | null (openPositions sud) = sud
+    | otherwise = solve $ head $ dfs [(sud, constraints sud)]
+    where
+        dfs :: [Node] -> [Node]
+        dfs [] = []
+        dfs ((s, cs):nodes)
+            | null cs = (s, cs) : dfs nodes
+            | null options = dfs nodes
+            | otherwise = dfs $ newNodes ++ nodes
+            where
+                ((r, c, options):cs') = cs
+                newNodes = [(extend s (r, c, v), sortBy (\(_, _, vs) (_, _, vs') -> compare (length vs) (length vs')) (constraints $ extend s (r, c, v))) | v <- options]
+        
+        solve :: Node -> Sudoku
+        solve (s, _) = solveSudoku s
 
 main :: IO ()
 main = do
     args <- getArgs
-    sud <- readSudoku (getSudokuName args)
+    maybeSudoku <- readSudoku (getSudokuName args)
     
-    if consistent sud
-        then do
-            finalSudoku <- solveSudoku sud
+    case maybeSudoku of
+        Just sud | consistent sud -> do
+            let finalSudoku = solveSudoku sud
             printSudoku finalSudoku
-        else do
-            error "Unsolvable sudoku"
-
-    -- If the Sudoku is consistent and solvable, the program will continue.
-    -- If the Sudoku is inconsistent, the program will terminate with an error message.
+        _ -> error "Invalid or unsolvable sudoku"
