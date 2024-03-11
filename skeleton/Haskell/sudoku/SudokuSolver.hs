@@ -124,7 +124,7 @@ solveSudoku sud
             where
                 ((r, c, options):cs') = cs
                 newNodes = [(extend s (r, c, v), sortBy (\(_, _, vs) (_, _, vs') -> compare (length vs) (length vs')) (constraints $ extend s (r, c, v))) | v <- options]
-        
+
         solve :: Node -> Sudoku
         solve (s, _) = solveSudoku s
 
@@ -133,7 +133,7 @@ main :: IO ()
 main = do
     args <- getArgs
     maybeSudoku <- readSudoku (getSudokuName args)
-    
+
     case maybeSudoku of
         Just sud | consistent sud -> do
             let finalSudoku = solveSudoku sud
