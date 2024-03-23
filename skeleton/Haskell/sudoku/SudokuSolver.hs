@@ -1,8 +1,3 @@
--- Sudoku solver using Haskell
--- Name: Nguyen Anh Le
--- StudentID: 15000370
--- BCs Informatica
-
 import System.Environment
 import Data.List
 
@@ -14,7 +9,12 @@ type Sudoku = (Row, Column) -> Value
 type Constraint = (Row, Column, [Value])
 type Node = (Sudoku, [Constraint])
 
--- Define constants for Sudoku grid
+data Solver = Solver
+  { constraintsFunction :: Sudoku -> [Constraint]
+  , extendFunction :: Sudoku -> (Row, Column, Value) -> Sudoku
+  }
+
+-- Constants for Sudoku grid
 positions :: [Int]
 positions = [1..9]
 
@@ -110,10 +110,10 @@ constraints :: Sudoku -> [Constraint]
 constraints sud = [(r, c, freeAtPos sud (r, c)) | (r, c) <- openPositions sud]
 
 -- Function to solve Sudoku using depth-first search
-solveSudoku :: Sudoku -> Sudoku
-solveSudoku sud
+solveSudoku :: Solver -> Sudoku -> Sudoku
+solveSudoku solver sud
     | null (openPositions sud) = sud
-    | otherwise = solve $ head $ dfs [(sud, constraints sud)]
+    | otherwise = solveSudoku solver (fst (head $ dfs [(sud, constraintsFunction solver sud)]))
     where
         dfs :: [Node] -> [Node]
         dfs [] = []
@@ -123,19 +123,47 @@ solveSudoku sud
             | otherwise = dfs $ newNodes ++ nodes
             where
                 ((r, c, options):cs') = cs
-                newNodes = [(extend s (r, c, v), sortBy (\(_, _, vs) (_, _, vs') -> compare (length vs) (length vs')) (constraints $ extend s (r, c, v))) | v <- options]
+                newNodes = [(extendFunction solver s (r, c, v), sortBy (\(_, _, vs) (_, _, vs') -> compare (length vs) (length vs')) (constraintsFunction solver (extendFunction solver s (r, c, v)))) | v <- options]
 
-        solve :: Node -> Sudoku
-        solve (s, _) = solveSudoku s
+-- Additional constraints for NRC Sudoku
+nrcConstraints :: Sudoku -> [Constraint]
+nrcConstraints sud = constraints sud ++ [(r, c, freeInNrcSubgrid sud (r, c)) | (r, c) <- openPositions sud]
+
+-- Function to find free values in NRC subgrids
+freeInNrcSubgrid :: Sudoku -> (Row, Column) -> [Value]
+freeInNrcSubgrid sud (row, col) = values \\ [sud (r, c) | r <- blockRows, c <- blockCols]
+    where blockRows = getBlockIndicesNrc row
+          blockCols = getBlockIndicesNrc col
+          getBlockIndicesNrc x = let start = 3 * ((x - 1) `div` 3) + 1 in [start..start+2]
 
 -- Main function to read and solve Sudoku from a file
 main :: IO ()
 main = do
     args <- getArgs
+    let solver = getSolver args
     maybeSudoku <- readSudoku (getSudokuName args)
 
     case maybeSudoku of
         Just sud | consistent sud -> do
-            let finalSudoku = solveSudoku sud
+            let finalSudoku = solveSudoku solver sud
             printSudoku finalSudoku
         _ -> error "Invalid or unsolvable sudoku"
+
+-- Function to determine the solver based on command line arguments
+getSolver :: [String] -> Solver
+getSolver (_:"nrc":_) = nrcSolver
+getSolver _ = normalSolver
+
+-- Normal Sudoku solver
+normalSolver :: Solver
+normalSolver = Solver
+  { constraintsFunction = constraints
+  , extendFunction = extend
+  }
+
+-- NRC Sudoku solver
+nrcSolver :: Solver
+nrcSolver = Solver
+  { constraintsFunction = nrcConstraints
+  , extendFunction = extend
+  }
