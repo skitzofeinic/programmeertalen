@@ -1,5 +1,7 @@
 -module(grid).
--export([new/2, get_wall/3, has_wall/2, add_wall/2, show_hlines/2, show_vlines/2, print/1, get_cell_walls/2, get_all_walls/2, get_open_spots/1, choose_random_wall/1]).
+-export([new/2, get_wall/3, add_wall/2, has_wall/2, show_hlines/2, show_vlines/2, 
+         get_cell_walls/2, get_all_walls/2, get_open_spots/1, choose_random_wall/1, 
+         print/1, thrd/1]).
 
 % Create a new grid with given width and height
 new(Width, Height) ->
