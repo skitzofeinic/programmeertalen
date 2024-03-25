@@ -1,4 +1,9 @@
+%% Author: Nguyen Anh Le
+%% StudentID: 15000370
+%% BCs Informatica
+
 -module(client).
+
 -export([move/0, new/0]).
 
 % Choose a random wall and send it to the server.
