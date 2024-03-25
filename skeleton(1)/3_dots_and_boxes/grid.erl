@@ -105,8 +105,8 @@ choose_random_wall(Grid) ->
     OpenSpots = get_open_spots(Grid),
     case OpenSpots of
         [] ->
-            [];
-        _ ->
+            []; % or any appropriate value indicating no available spot
+        _ when is_list(OpenSpots) -> % Check if OpenSpots is a list
             RandomIndex = rand:uniform(length(OpenSpots)),
             lists:nth(RandomIndex, OpenSpots)
     end.
